@@ -1,0 +1,18 @@
+* Board/move representation
+** 2048 = 2^11
+** Since '2' is the smallest, it could also be 2^10.
+** Store 10 16-bitsets, 5 32-bit, 3 64-bits.
+* Be able to simulate games
+* Algorithm
+** We want to optimize for expected depth.
+*** EV = probability * depth
+*** EV(X)
+= (EV(x1) + 1)/ n + (EV(x2)+1) / n ... EV(xn) / n
+= sum(EV(xi)+1) / n
+= avg(EV(xi) + 1)
+= avg(EV(xi)) + 1
+** Standard minimax
+** Zobrist hashing(the meaning of the value V in the hash spot is "Real >= V")
+http://en.wikipedia.org/wiki/Zobrist_hashing
+** Tree pruning
+*** We want the minimum number of penalty points. The penalty points are the 
