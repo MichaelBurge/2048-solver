@@ -19,6 +19,7 @@ global peek_move
 global available_moves
 global free_squares
 global nth_one
+global modulus
 
 	;; For readability
 %define return rax
@@ -70,25 +71,51 @@ new_game:
 	;; Uses:
 	;; * r8 - Exponent randomly chosen to fill the square
 	;; * r9 - Index of square to fill
+	;; * r10 - Bitset of available squares
+	;; * r11 - Random number
+	;; * r12 - Copy of Arg1
 %define chosen_exponent r8
 %define idx_square r9
+%define available_squares r10
+%define random_number r11
+%define board_pointer r12
 spawn_square:
-	zero(chosen_exponent)
-	
-	call rand
-	;; Use one bit of entropy to determine 1 or 2 to fill the square
-	shr return, 1
-	adc chosen_exponent, 0
+	mov board_pointer, Arg1
+
 	;; Determine free squares
+	call free_squares
+	mov available_squares, return
+	
+	zero(chosen_exponent)
+
+	call rand
+	mov random_number, rax
+	;; Use one bit of entropy to determine 1 or 2 to fill the square
+	shr random_number, 1
+	adc chosen_exponent, 0
+
+	;; Map random number to random available square index
+	zero(rdx)
+	div rand
+	mov idx_square, rdx
+	
 	;; Determine index of location to place
+	mov arg1, available_squares
+	mov arg2, idx_square
 	call nth_one
 	mov idx_square, return
+
 	;; Place the square
+	mov rax, 1
+	shl rax, idx_square
+	or word ptr [ board_pointer + bitset_stride * chosen_exponent ], rax
 	
 	ret
 %undef chosen_exponent
 %undef idx_square
-
+%undef available_squares
+%undef random_number
+%undef board_pointer
 	;; Name: nth_one
 	;; Arg1: Integer
 	;; Arg2: n
@@ -119,3 +146,4 @@ nth_one:
 	ret
 %undef idx_lowest
 %undef idx_count
+
