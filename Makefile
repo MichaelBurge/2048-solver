@@ -4,20 +4,20 @@ LIBRARIES = -lboost_program_options
 TEST_LIBRARIES = -lboost_unit_test_framework
 
 CXX = g++
-CFLAGS = -O0 -ggdb -Wall -Wextra -std=c++11 $(SYSINCLUDES)
+CFLAGS = -O3 -ggdb -Wall -Wextra -std=c++11 $(SYSINCLUDES)
 AS = yasm
 ASFLAGS = -f win64
 
-primary_files =
+primary_files = solver.o
 profiling_options = -p -pg
 link = $(CXX) $(CFLAGS) $^ -o $@
 
 all: main.exe
 
 %.o: %.cpp
-	$(CXX) $(CLFAGS) -o $@ -c $<
+	$(CXX) $(CFLAGS) -o $@ -c $<
 %.o: %.asm
-	$(AS) $(ASFLAGS) -o $@ -c $<
+	$(AS) $(ASFLAGS) -o $@ $<
 
 main.exe: $(primary_files) main.o
 	$(link) $(LIBRARIES)
@@ -28,5 +28,9 @@ test_solver.exe: $(primary_files) tests/solver.o
 test: test_solver.exe
 	./test_solver.exe
 
+%.s: %.cpp
+	$(CXX) -mpopcnt -O3 -Wall -Wextra -std=c++11 -fno-exceptions -fno-asynchronous-unwind-tables -Wa,-aslh -S $<
+example: example.s
+	true
 clean:
-	rm $(primary_files) main.o main.exe test_solver.exe tests/solver.o
+	rm $(primary_files) main.o main.exe test_solver.exe tests/solver.o example.s

@@ -44,7 +44,7 @@ free_squares:
 	zero(return)
 	zero(current_exponent)
 .loop:
-	or hit_positions, word ptr [ arg1 + bitset_stride * current_exponent ]
+	or hit_positions, word [ arg1 + bitset_stride * current_exponent ]
 	;; Have we considered all exponents?
 	inc current_exponent
 	cmp current_exponent, max_exponent
@@ -61,7 +61,7 @@ free_squares:
 new_game:
 	%assign i 0
 	%rep 8
-	mov word [arg1 + i * bitsetstride], 0
+	mov word [arg1 + i * bitset_stride], 0
 	%assign i i+1
 	%endrep
 	jmp spawn_square
@@ -70,17 +70,19 @@ new_game:
 	;; Arg1: Pointer to board
 	;; Uses:
 	;; * r8 - Exponent randomly chosen to fill the square
-	;; * r9 - Index of square to fill
+	;; * rcx - Index of square to fill
 	;; * r10 - Bitset of available squares
 	;; * r11 - Random number
 	;; * r12 - Copy of Arg1
+	;; * r13 - Number of available squares
 %define chosen_exponent r8
-%define idx_square r9
+%define idx_square rcx
 %define available_squares r10
 %define random_number r11
 %define board_pointer r12
+%define num_available_squares r13
 spawn_square:
-	mov board_pointer, Arg1
+	mov board_pointer, arg1
 
 	;; Determine free squares
 	call free_squares
@@ -95,8 +97,9 @@ spawn_square:
 	adc chosen_exponent, 0
 
 	;; Map random number to random available square index
+	popcnt num_available_squares, available_squares
 	zero(rdx)
-	div rand
+	div num_available_squares
 	mov idx_square, rdx	; rdx is the remainder
 	
 	;; Determine index of location to place
@@ -106,9 +109,9 @@ spawn_square:
 	mov idx_square, return
 
 	;; Place the square
-	mov rax, 1
-	shl rax, idx_square
-	or word ptr [ board_pointer + bitset_stride * chosen_exponent ], rax
+	mov ax, 1
+	shl ax, cl
+	or word [ board_pointer + bitset_stride * chosen_exponent ], ax
 	
 	ret
 %undef chosen_exponent
@@ -116,23 +119,26 @@ spawn_square:
 %undef available_squares
 %undef random_number
 %undef board_pointer
+%undef num_available_squares
 	;; Name: nth_one
 	;; Arg1: Integer
 	;; Arg2: n
 	;; Returns: 0-based index of nth set bit in Arg1.
 	;; Uses:
-	;; * r8 - Holds index of lowest bit
+	;; * rcx - Holds index of lowest bit
+	;; * r8 - Arg1 as its repeatedly shifted right
 	;; * r9 - Holds index counter
 	;; Notes:
 	;; * If n >= num bits set in Arg1, then returns index of highest bit ;
 
-%define idx_lowest r8
+%define idx_lowest rcx
 %define idx_count r9
 nth_one:
 	zero(idx_count)
 	zero(return)
+	mov r8, arg1
 .loop:
-	bsf idx_lowest, arg1
+	bsf idx_lowest, r8
 	jz .exit
 	add return, idx_lowest
 	
@@ -140,8 +146,8 @@ nth_one:
 	jge .exit
 	
 	inc idx_count
-	shr arg1, idx_lowest
-	jmp loop
+	shr r8, cl
+	jmp .loop
 .exit:	
 	ret
 %undef idx_lowest

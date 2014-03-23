@@ -1,11 +1,9 @@
-#include <SDL2/SDL.h>
+#include <iostream>
+using namespace std;
 
-int main(int argc, char* args[])
+int main()
 {
-SDL_Init(SDL_INIT_EVERYTHING);
-
-SDL_Quit();
-
-return 0;
+    cout << "Derp" << endl;
+    return 0;
 }
  
