@@ -89,7 +89,7 @@ spawn_square:
 	zero(chosen_exponent)
 
 	call rand
-	mov random_number, rax
+	mov random_number, return
 	;; Use one bit of entropy to determine 1 or 2 to fill the square
 	shr random_number, 1
 	adc chosen_exponent, 0
@@ -97,7 +97,7 @@ spawn_square:
 	;; Map random number to random available square index
 	zero(rdx)
 	div rand
-	mov idx_square, rdx
+	mov idx_square, rdx	; rdx is the remainder
 	
 	;; Determine index of location to place
 	mov arg1, available_squares
