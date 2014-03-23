@@ -140,15 +140,17 @@ nth_one:
 .loop:
 	bsf idx_lowest, r8
 	jz .exit
+	inc idx_lowest
 	add return, idx_lowest
 	
 	cmp idx_count, arg2
 	jge .exit
 	
-	inc idx_count
 	shr r8, cl
+	inc idx_count
 	jmp .loop
-.exit:	
+.exit:
+	dec return
 	ret
 %undef idx_lowest
 %undef idx_count
